@@ -1,0 +1,15 @@
+{
+  "name": ".NET Core",
+  // https://docs.microsoft.com/ja-jp/dotnet/architecture/microservices/net-core-net-framework-containers/official-net-docker-images
+  // https://hub.docker.com/_/microsoft-dotnet-sdk/
+  "image": "mcr.microsoft.com/dotnet/sdk:6.0",
+  "containerEnv": {
+    "TZ": "Asia/Tokyo"
+  },
+  "extensions": [
+    "ms-dotnettools.csharp",
+    "ms-azuretools.vscode-azureappservice",
+    "EditorConfig.EditorConfig"
+  ],
+  "postCreateCommand": "apt update && apt install --yes ssh"
+}
