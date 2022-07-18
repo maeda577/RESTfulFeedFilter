@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Xml;
 using System.Xml.XPath;
 using Microsoft.AspNetCore.Http;
@@ -35,7 +36,7 @@ public class FeedController : ControllerBase
     /// <response code="500">Internal Error.</response>
     [HttpGet("filter")]
     [Produces("application/xml")]
-    public ActionResult<XmlDocument> FilterFeed(
+    public ActionResult FilterFeed(
         [FromQuery(Name = "feedUrl")]
         [CustomValidation(typeof(FeedController), nameof(FeedController.ValidateUrl))]  // System.ComponentModel.DataAnnotations.UrlAttribute はなぜか動かなかったので自作した
         [Required]
@@ -70,7 +71,7 @@ public class FeedController : ControllerBase
                 .Where(node => node.ParentNode != null)
                 .Select(node => node.ParentNode!.RemoveChild(node))
                 .ToList();
-            
+
             // RSS1.0にあるSeqノードをXPath決め打ちで探す
             XmlNode? seqNode = xml.SelectSingleNode("/rdf:RDF/default:channel/default:items/rdf:Seq", namespaces);
             if (executePostProcessForRss1 && deletedNodes != null && seqNode != null)
@@ -78,13 +79,22 @@ public class FeedController : ControllerBase
                 // 削除したノードのrdf:aboutを集める
                 HashSet<string?> deletedUrls = deletedNodes.Select(node => node.Attributes?["rdf:about"]?.Value).ToHashSet();
                 deletedUrls.Remove(null);
-                // Seqノードの子要素から削除したノードに紐づく要素を消す(ToListは無駄だが無いとLINQが評価されない)
+                // Seqノードの子要素から削除したノードに紐づく要素を消す
                 seqNode.ChildNodes.Cast<XmlNode>()
                     .Where(node => deletedUrls.Contains(node.Attributes?["rdf:resource"]?.Value))
                     .ToList()
                     .ForEach(node => node.ParentNode!.RemoveChild(node));
             }
-            return xml;
+
+            // 出力がUTF8決め打ちなので、XmlDeclarationがあればEncodingをUTF8にする
+            if (xml.FirstChild?.NodeType == XmlNodeType.XmlDeclaration)
+            {
+                XmlDeclaration? declaration = xml.FirstChild as XmlDeclaration;
+                xml.CreateXmlDeclaration(declaration?.Version ?? "1.0", "UTF-8", declaration?.Standalone);
+            }
+
+            // 普通にXmlDocumentを返すと何故かXmlDeclarationが消えるのでFileとして返す
+            return this.File(Encoding.UTF8.GetBytes(xml.OuterXml), "application/xml");
         }
         catch (HttpRequestException e)  // XMLを取得しに行ったが失敗した
         {
