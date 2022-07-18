@@ -20,14 +20,15 @@ internal class Program
             options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
         }).AddXmlSerializerFormatters();
 
-        // Swaggerの設定 https://docs.microsoft.com/ja-jp/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-6.0&tabs=visual-studio
+        // Swaggerの設定 https://docs.microsoft.com/ja-jp/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-6.0
         builder.Services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo
             {
-                Version = "v1",
+                Version = "1.0.0",
+                
                 Title = "RESTful Feed Filter",
-                Description = "Filtering API for rss/atom feeds",
+                Description = "This is a simple API to exclude unnecessary elements from RSS, Atom, and other feeds. Unnecessary elements are specified by XPath.",
                 Contact = new OpenApiContact
                 {
                     Name = "Source Repository",
@@ -35,7 +36,7 @@ internal class Program
                 },
                 License = new OpenApiLicense
                 {
-                    Name = "The Unlicense",
+                    Name = "The MIT License (MIT)",
                     Url = new Uri("https://github.com/maeda577/RESTfulFeedFilter/blob/main/LICENSE")
                 }
             });

@@ -25,13 +25,14 @@ public class FeedController : ControllerBase
     /// Namespaces defined in the original feed are also available in XPath.<br />
     /// Default namespace in the original feed is available as "default" prefix.<br />
     /// </p>
-    /// Example XPath for atom feed: /default:feed/default:entry[starts-with(default:title, 'PR')]
+    /// <p>Example XPath for atom feed: /default:feed/default:entry[starts-with(default:title, 'PR')]</p>
     /// </remarks>
     /// <param name="feedUrl" example="https://example.com/feed.rss">Source feed URL.</param>
     /// <param name="xpath" example="/rss/channel/item[starts-with(title, 'PR')]">XPath that matches the item you want to exclude.</param>
-    /// <response code="200">OK</response>
-    /// <response code="400">Invalid Parameters</response>
-    /// <response code="500">Internal Error</response>
+    /// <param name="executePostProcessForRss1">If source feed is RSS1.0, rdf:Seq elements associated with the excluded elements are also excluded.</param>
+    /// <response code="200">OK. Returns filtered feed XML.</response>
+    /// <response code="400">Invalid Parameters.</response>
+    /// <response code="500">Internal Error.</response>
     [HttpGet("filter")]
     [Produces("application/xml")]
     public ActionResult<XmlDocument> FilterFeed(
@@ -43,7 +44,10 @@ public class FeedController : ControllerBase
         [FromQuery(Name = "xpath")]
         [CustomValidation(typeof(FeedController), nameof(FeedController.ValidateXPath))]
         [Required]
-        string xpath
+        string xpath,
+
+        [FromQuery(Name = "executePostProcessForRss1")]
+        bool executePostProcessForRss1 = true
     )
     {
         XmlDocument xml = new XmlDocument();
@@ -60,19 +64,33 @@ public class FeedController : ControllerBase
                 .ToList()
                 .ForEach(attr => namespaces.AddNamespace(attr.Prefix == "xmlns" ? attr.LocalName : "default", attr.Value));
 
-            // XPathにマッチするノードを消す
-            xml.SelectNodes(xpath, namespaces)
+            // XPathにマッチするノードを消しつつ収集する(ルート要素は消せない仕様にした)
+            List<XmlNode>? deletedNodes = xml.SelectNodes(xpath, namespaces)
                 ?.Cast<XmlNode>()
-                .ToList()
-                .ForEach(node => node.ParentNode?.RemoveChild(node));
-
+                .Where(node => node.ParentNode != null)
+                .Select(node => node.ParentNode!.RemoveChild(node))
+                .ToList();
+            
+            // RSS1.0にあるSeqノードをXPath決め打ちで探す
+            XmlNode? seqNode = xml.SelectSingleNode("/rdf:RDF/default:channel/default:items/rdf:Seq", namespaces);
+            if (executePostProcessForRss1 && deletedNodes != null && seqNode != null)
+            {
+                // 削除したノードのrdf:aboutを集める
+                HashSet<string?> deletedUrls = deletedNodes.Select(node => node.Attributes?["rdf:about"]?.Value).ToHashSet();
+                deletedUrls.Remove(null);
+                // Seqノードの子要素から削除したノードに紐づく要素を消す(ToListは無駄だが無いとLINQが評価されない)
+                seqNode.ChildNodes.Cast<XmlNode>()
+                    .Where(node => deletedUrls.Contains(node.Attributes?["rdf:resource"]?.Value))
+                    .ToList()
+                    .ForEach(node => node.ParentNode!.RemoveChild(node));
+            }
             return xml;
         }
         catch (HttpRequestException e)  // XMLを取得しに行ったが失敗した
         {
             return this.Problem(
                 statusCode: StatusCodes.Status400BadRequest,
-                title: "An error occurred while fetching external feed.",
+                title: "An error occurred while fetching source feed.",
                 detail: e.Message
             );
         }
