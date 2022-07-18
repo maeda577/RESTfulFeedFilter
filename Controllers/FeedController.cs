@@ -35,7 +35,7 @@ public class FeedController : ControllerBase
     /// <response code="400">Invalid Parameters.</response>
     /// <response code="500">Internal Error.</response>
     [HttpGet("filter")]
-    [Produces("application/xml")]
+    [Produces("application/rss+xml")]
     public ActionResult FilterFeed(
         [FromQuery(Name = "feedUrl")]
         [CustomValidation(typeof(FeedController), nameof(FeedController.ValidateUrl))]  // System.ComponentModel.DataAnnotations.UrlAttribute はなぜか動かなかったので自作した
@@ -95,7 +95,7 @@ public class FeedController : ControllerBase
             }
 
             // 普通にXmlDocumentを返すと何故かXmlDeclarationが消えるのでFileとして返す
-            return this.File(Encoding.UTF8.GetBytes(xml.OuterXml), "application/xml");
+            return this.File(Encoding.UTF8.GetBytes(xml.OuterXml), "application/rss+xml");
         }
         catch (HttpRequestException e)  // XMLを取得しに行ったが失敗した
         {
