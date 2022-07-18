@@ -72,15 +72,16 @@ public class FeedController : ControllerBase
                 .Select(node => node.ParentNode!.RemoveChild(node))
                 .ToList();
 
-            // RSS1.0にあるSeqノードをXPath決め打ちで探す
-            XmlNode? seqNode = xml.SelectSingleNode("/rdf:RDF/default:channel/default:items/rdf:Seq", namespaces);
-            if (executePostProcessForRss1 && deletedNodes != null && seqNode != null)
+            // RSS1.0周りの処理
+            if (executePostProcessForRss1 && deletedNodes != null && namespaces.HasNamespace("rdf") && namespaces.HasNamespace("default"))
             {
+                // RSS1.0にあるSeqノードをXPath決め打ちで探す
+                XmlNode? seqNode = xml.SelectSingleNode("/rdf:RDF/default:channel/default:items/rdf:Seq", namespaces);
                 // 削除したノードのrdf:aboutを集める
                 HashSet<string?> deletedUrls = deletedNodes.Select(node => node.Attributes?["rdf:about"]?.Value).ToHashSet();
                 deletedUrls.Remove(null);
                 // Seqノードの子要素から削除したノードに紐づく要素を消す
-                seqNode.ChildNodes.Cast<XmlNode>()
+                seqNode?.ChildNodes.Cast<XmlNode>()
                     .Where(node => deletedUrls.Contains(node.Attributes?["rdf:resource"]?.Value))
                     .ToList()
                     .ForEach(node => node.ParentNode!.RemoveChild(node));
