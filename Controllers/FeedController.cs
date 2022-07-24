@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Xml;
 using System.Xml.XPath;
 using Microsoft.AspNetCore.Http;
@@ -36,7 +35,7 @@ public class FeedController : ControllerBase
     /// <response code="500">Internal Error.</response>
     [HttpGet("filter")]
     [Produces("application/rss+xml")]
-    public ActionResult FilterFeed(
+    public ActionResult<XmlDocument> FilterFeed(
         [FromQuery(Name = "feedUrl")]
         [CustomValidation(typeof(FeedController), nameof(FeedController.ValidateUrl))]  // System.ComponentModel.DataAnnotations.UrlAttribute はなぜか動かなかったので自作した
         [Required]
@@ -86,16 +85,17 @@ public class FeedController : ControllerBase
                     .ToList()
                     .ForEach(node => node.ParentNode!.RemoveChild(node));
             }
+            return xml;
 
-            // 出力がUTF8決め打ちなので、XmlDeclarationがあればEncodingをUTF8にする
-            if (xml.FirstChild?.NodeType == XmlNodeType.XmlDeclaration)
-            {
-                XmlDeclaration? declaration = xml.FirstChild as XmlDeclaration;
-                xml.CreateXmlDeclaration(declaration?.Version ?? "1.0", "UTF-8", declaration?.Standalone);
-            }
+            // // 出力がUTF8決め打ちなので、XmlDeclarationがあればEncodingをUTF8にする
+            // if (xml.FirstChild?.NodeType == XmlNodeType.XmlDeclaration)
+            // {
+            //     XmlDeclaration? declaration = xml.FirstChild as XmlDeclaration;
+            //     xml.CreateXmlDeclaration(declaration?.Version ?? "1.0", "UTF-8", declaration?.Standalone);
+            // }
 
             // 普通にXmlDocumentを返すと何故かXmlDeclarationが消えるのでFileとして返す
-            return this.File(Encoding.UTF8.GetBytes(xml.OuterXml), "application/rss+xml");
+            // return this.File(Encoding.UTF8.GetBytes(xml.OuterXml), "application/rss+xml");
         }
         catch (HttpRequestException e)  // XMLを取得しに行ったが失敗した
         {
