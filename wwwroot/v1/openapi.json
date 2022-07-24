@@ -1,0 +1,82 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "RESTful Feed Filter",
+    "description": "This is a simple API to exclude unnecessary elements from RSS, Atom, and other feeds. Unnecessary elements are specified by XPath.",
+    "contact": {
+      "name": "Source Repository",
+      "url": "https://github.com/maeda577/RESTfulFeedFilter"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/Feed/filter": {
+      "get": {
+        "summary": "Filter items from feed",
+        "description": "Note about XML namespace:\n* Namespaces defined in the original feed are also available in XPath.\n* Default namespace in the original feed is available as \"default\" prefix.\n* Example XPath for atom feed with \"default\" namespace:\n  * /default:feed/default:entry[starts-with(default:title, 'PR')]",
+        "parameters": [
+          {
+            "name": "feedUrl",
+            "in": "query",
+            "description": "Source feed URL.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": "https://example.com/feed.rss"
+          },
+          {
+            "name": "xpath",
+            "in": "query",
+            "description": "XPath that matches the item you want to exclude.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "/rss/channel/item[starts-with(title, 'PR')]",
+            "style": "form"
+          },
+          {
+            "name": "executePostProcessForRss1",
+            "in": "query",
+            "description": "If source feed is RSS1.0, rdf:Seq elements associated with the excluded elements are also excluded.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. Returns filtered feed XML.",
+            "content": {
+              "application/rss+xml": {
+                "schema": {
+                  "type": "string",
+                  "description": "Filtered XML"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Parameters."
+          },
+          "500": {
+            "description": "Internal Error."
+          }
+        },
+        "operationId": "filter",
+        "tags": [
+          "Feed"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Feed",
+      "description": "Feed related APIs"
+    }
+  ]
+}

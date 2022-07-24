@@ -3,6 +3,7 @@
   // https://docs.microsoft.com/ja-jp/dotnet/architecture/microservices/net-core-net-framework-containers/official-net-docker-images
   // https://hub.docker.com/_/microsoft-dotnet-sdk/
   "image": "mcr.microsoft.com/dotnet/sdk:6.0",
+  "runArgs": [ "--platform", "linux/amd64" ],   // azコマンドがarmイメージだと動かなかった
   "containerEnv": {
     "TZ": "Asia/Tokyo"
   },
@@ -11,5 +12,5 @@
     "ms-azuretools.vscode-azureappservice",
     "EditorConfig.EditorConfig"
   ],
-  "postCreateCommand": "apt update && apt install --yes ssh"
+  "postCreateCommand": "apt update && apt install --yes ssh zip && curl -sL https://aka.ms/InstallAzureCLIDeb | bash"
 }

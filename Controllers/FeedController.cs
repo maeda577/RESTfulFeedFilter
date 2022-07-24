@@ -18,21 +18,10 @@ public class FeedController : ControllerBase
     private static readonly IReadOnlySet<string> URL_SCHEMES = new HashSet<string>() { Uri.UriSchemeHttp, Uri.UriSchemeHttps };
 
     // APIの戻り値はActionResult https://docs.microsoft.com/ja-jp/aspnet/core/web-api/action-return-types?view=aspnetcore-6.0
-    /// <summary>Filter items from feed.</summary>
-    /// <remarks>
-    /// Note:
-    /// <p>
-    /// Namespaces defined in the original feed are also available in XPath.<br />
-    /// Default namespace in the original feed is available as "default" prefix.<br />
-    /// </p>
-    /// <p>Example XPath for atom feed: /default:feed/default:entry[starts-with(default:title, 'PR')]</p>
-    /// </remarks>
-    /// <param name="feedUrl" example="https://example.com/feed.rss">Source feed URL.</param>
-    /// <param name="xpath" example="/rss/channel/item[starts-with(title, 'PR')]">XPath that matches the item you want to exclude.</param>
-    /// <param name="executePostProcessForRss1">If source feed is RSS1.0, rdf:Seq elements associated with the excluded elements are also excluded.</param>
-    /// <response code="200">OK. Returns filtered feed XML.</response>
-    /// <response code="400">Invalid Parameters.</response>
-    /// <response code="500">Internal Error.</response>
+    /// <summary>Feedフィルタ</summary>
+    /// <param name="feedUrl">元のFeedのURL</param>
+    /// <param name="xpath">削除対象のXPath</param>
+    /// <param name="executePostProcessForRss1">RSS1.0でrdf:Seqの要素も消すかどうか</param>
     [HttpGet("filter")]
     [Produces("application/rss+xml")]
     public ActionResult<XmlDocument> FilterFeed(
@@ -86,16 +75,6 @@ public class FeedController : ControllerBase
                     .ForEach(node => node.ParentNode!.RemoveChild(node));
             }
             return xml;
-
-            // // 出力がUTF8決め打ちなので、XmlDeclarationがあればEncodingをUTF8にする
-            // if (xml.FirstChild?.NodeType == XmlNodeType.XmlDeclaration)
-            // {
-            //     XmlDeclaration? declaration = xml.FirstChild as XmlDeclaration;
-            //     xml.CreateXmlDeclaration(declaration?.Version ?? "1.0", "UTF-8", declaration?.Standalone);
-            // }
-
-            // 普通にXmlDocumentを返すと何故かXmlDeclarationが消えるのでFileとして返す
-            // return this.File(Encoding.UTF8.GetBytes(xml.OuterXml), "application/rss+xml");
         }
         catch (HttpRequestException e)  // XMLを取得しに行ったが失敗した
         {

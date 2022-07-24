@@ -36,6 +36,61 @@
                 "${workspaceFolder}/Rff.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "clean",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "clean",
+                "${workspaceFolder}",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-release",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}",
+                "--configuration",
+                "Release",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn": "clean"
+        },
+        // ZIPでの展開系
+        {
+            "label": "zip",
+            "command": "zip",
+            "type": "process",
+            "options": {
+                "cwd": "${workspaceFolder}/bin/Release/net6.0/publish"
+            },
+            "args": [
+                "--filesync",
+                "--recurse-paths",
+                "../release.zip",
+                "./*"
+            ],
+            "dependsOn": "publish-release"
+        },
+        {
+            "label": "deploy",
+            "command": "az",
+            "type": "process",
+            "args": [
+                "webapp",
+                "deploy",
+                "${workspaceFolder}/bin/Release/net6.0/release.zip"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn": "zip"
         }
     ]
 }
