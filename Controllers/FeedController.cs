@@ -20,7 +20,7 @@ public class FeedController : ControllerBase
     // APIの戻り値はActionResult https://docs.microsoft.com/ja-jp/aspnet/core/web-api/action-return-types?view=aspnetcore-6.0
     /// <summary>Feedフィルタ</summary>
     /// <param name="feedUrl">元のFeedのURL</param>
-    /// <param name="xpath">削除対象のXPath</param>
+    /// <param name="xpath">削除対象を選択するXPath</param>
     /// <param name="executePostProcessForRss1">RSS1.0でrdf:Seqの要素も消すかどうか</param>
     [HttpGet("filter")]
     [Produces("application/rss+xml")]

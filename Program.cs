@@ -13,9 +13,9 @@ internal class Program
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddHttpLogging(logging =>
+        builder.Services.AddHttpLogging(options =>
         {
-            logging.LoggingFields = HttpLoggingFields.All;
+            options.LoggingFields = HttpLoggingFields.All;
         });
 
         // 標準の出力を切ってXMLに限定する https://docs.microsoft.com/ja-jp/aspnet/core/web-api/advanced/formatting?view=aspnetcore-6.0
@@ -25,7 +25,7 @@ internal class Program
             options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
         }).AddXmlSerializerFormatters();
 
-        // XML出力でXML Declarationが消えないようにする
+        // XML出力でXML Declarationが消えないようにして改行入れる
         builder.Services.Configure<MvcOptions>(options =>
         {
             XmlSerializerOutputFormatter? xmlWriterSettings = options.OutputFormatters
