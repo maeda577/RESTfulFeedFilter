@@ -44,3 +44,4 @@ https://rff.azurewebsites.net/
     * RSS2.0: `/rss/channel/item[not(category/text()='event')]`
 * URLに`event`と`news`のどちらも含まれないものを除外する
     * RSS2.0: `/rss/channel/item[not(contains(link,'event') or contains(link,'news'))]`
+    * Atom: `/default:feed/default:entry[not(contains(default:link/@href,'event') or contains(default:link/@href,'news'))]`
