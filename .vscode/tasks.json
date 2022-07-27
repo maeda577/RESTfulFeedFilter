@@ -37,60 +37,39 @@
             ],
             "problemMatcher": "$msCompile"
         },
+        // ここまで自動生成のテンプレート
+        // イメージのビルド コンテナから出て実行する
         {
-            "label": "clean",
-            "command": "dotnet",
+            "label": "build image",
+            "command": "docker",
             "type": "process",
             "args": [
-                "clean",
-                "${workspaceFolder}",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "build",
+                "--platform",
+                "linux/amd64",
+                "--tag",
+                "ghcr.io/maeda577/rff:latest",
+                "${workspaceFolder}"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": []
         },
         {
-            "label": "publish-release",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "publish",
-                "${workspaceFolder}",
-                "--configuration",
-                "Release",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile",
-            "dependsOn": "clean"
-        },
-        // ZIPでの展開系
-        {
-            "label": "zip",
-            "command": "zip",
-            "type": "process",
-            "options": {
-                "cwd": "${workspaceFolder}/bin/Release/net6.0/publish"
-            },
-            "args": [
-                "--filesync",
-                "--recurse-paths",
-                "../release.zip",
-                "./*"
-            ],
-            "dependsOn": "publish-release"
+            "label": "login to ghcr.io",
+            "command": "echo 'https://ghcr.io' | docker-credential-osxkeychain get | docker login ghcr.io",
+            "type": "shell",
+            "problemMatcher": []
         },
         {
-            "label": "deploy",
-            "command": "az",
+            "label": "push image to ghcr.io",
+            "command": "docker",
             "type": "process",
             "args": [
-                "webapp",
-                "deploy",
-                "${workspaceFolder}/bin/Release/net6.0/release.zip"
+                "push",
+                "ghcr.io/maeda577/rff:latest"
             ],
-            "problemMatcher": "$msCompile",
-            "dependsOn": "zip"
+            "problemMatcher": [],
+            "dependsOrder": "sequence",
+            "dependsOn": [ "login to ghcr.io", "build image" ]
         }
     ]
 }
